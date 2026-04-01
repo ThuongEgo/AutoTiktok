@@ -276,6 +276,198 @@
       return hash ? out + '#' + hash : out;
     }
   }
+
+  // ============ MUSIC DOWNLOAD ============
+  let currentVideoElement = null;
+
+  // Lấy video ID theo ưu tiên giống luồng mở video/comment
+  function extractVideoId(container) {
+    // 1) Khi đang ở modal/video page thì URL là nguồn đáng tin cậy nhất
+    const idFromUrl = window.location.href.match(/\/video\/(\d+)/)?.[1];
+    if (idFromUrl) return idFromUrl;
+
+    // 2) Dùng cache từ fetch hook nếu có
+    if (window.__LAST_VIDEO_ID) return window.__LAST_VIDEO_ID;
+
+    // 3) Tìm ID từ các link video trong trang
+    const linkCandidates = [
+      container,
+      currentVideoElement,
+      document.querySelector('[data-e2e="browse-video"]'),
+      document
+    ];
+    for (const root of linkCandidates) {
+      if (!root?.querySelector) continue;
+      const idFromLink = root.querySelector('a[href*="/video/"]')?.getAttribute('href')?.match(/\/video\/(\d+)/)?.[1];
+      if (idFromLink) return idFromLink;
+    }
+
+    // 4) Fallback từ data attributes
+    const idAttr = container?.getAttribute?.('data-e2e-video-id') ||
+      currentVideoElement?.getAttribute?.('data-e2e-video-id');
+    if (idAttr) return idAttr;
+
+    return null;
+  }
+
+  function extractVideoUrl(container, videoId) {
+    const candidateUrls = [];
+
+    if (window.location.href.includes('/video/')) {
+      candidateUrls.push(window.location.href);
+    }
+
+    const linkCandidates = [
+      container,
+      currentVideoElement,
+      document.querySelector('[data-e2e="browse-video"]'),
+      document
+    ];
+
+    for (const root of linkCandidates) {
+      if (!root?.querySelector) continue;
+      const href = root.querySelector('a[href*="/video/"]')?.getAttribute('href');
+      if (!href) continue;
+      try {
+        const absUrl = new URL(href, location.origin).toString();
+        candidateUrls.push(absUrl);
+      } catch (e) {}
+    }
+
+    const canonical = document.querySelector('link[rel="canonical"]')?.getAttribute('href');
+    if (canonical && canonical.includes('/video/')) {
+      candidateUrls.push(canonical);
+    }
+
+    if (videoId) {
+      candidateUrls.push(`https://www.tiktok.com/video/${videoId}`);
+    }
+
+    const finalUrl = candidateUrls.find((url) => /\/video\/\d+/.test(url));
+    return finalUrl ? withLangEn(finalUrl) : null;
+  }
+
+  function openMp3FallbackDownloader(videoUrl) {
+    if (!videoUrl) {
+      alert('Không tìm thấy link video để chuyển đổi MP3');
+      return;
+    }
+
+    const fallbackUrl = `https://tiker.io/vi/download-tiktok-mp3?url=${encodeURIComponent(videoUrl)}`;
+    window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
+  }
+
+  async function getMusicPlayUrl(videoUrl, videoId) {
+    if (!videoUrl) return null;
+
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: 'fetchTikerMusic',
+        videoUrl
+      });
+
+      if (response?.success && response.musicUrl) {
+        window.__LAST_VIDEO_ID = videoId || null;
+        window.__LAST_MUSIC_URL = response.musicUrl;
+        return response.musicUrl;
+      }
+    } catch (e) {}
+
+    return null;
+  }
+
+  function initMusicDownloadFeature() {
+    const handleMusicDownload = async (container) => {
+      const videoId = extractVideoId(container);
+      if (!videoId) {
+        alert('Không tìm thấy video ID');
+        return;
+      }
+
+      const videoUrl = extractVideoUrl(container, videoId);
+      const musicUrl = await getMusicPlayUrl(videoUrl, videoId);
+      if (musicUrl) {
+        chrome.runtime.sendMessage({
+          action: 'downloadMusic',
+          url: musicUrl,
+          filename: `tiktok-music-${Date.now()}.mp3`
+        });
+      } else {
+        openMp3FallbackDownloader(videoUrl);
+        alert('Không lấy được link nhạc trực tiếp. Đã mở Tiker để chuyển đổi MP3.');
+      }
+    };
+
+    if (window.__TIKTOK_MUSIC_DL_READY) return;
+    window.__TIKTOK_MUSIC_DL_READY = true;
+
+    const containerSelector = [
+      'div[data-e2e="feed-video"]',
+      'div[data-e2e="video-item"]',
+      'div[data-e2e="recommend-list-item-container"]',
+      'div[class*="DivVideoContainer"]',
+      'div[class*="DivItemContainer"]',
+      'div.tiktok-1c7urtf'
+    ].join(', ');
+
+    const processVideoContainers = () => {
+      const videoContainers = document.querySelectorAll(containerSelector);
+      videoContainers.forEach((container) => {
+        if (!container.querySelector('video')) return;
+        if (container.querySelector('.tiktok-music-dl-btn')) return;
+
+        const btn = document.createElement('button');
+        btn.className = 'tiktok-music-dl-btn';
+        btn.innerHTML = '♫ Tải nhạc';
+        btn.style.cssText = `
+          position: absolute; top: 12px; right: 12px; z-index: 9999;
+          background: #ff2d55; color: white; border: none; padding: 5px 9px;
+          border-radius: 9999px; font-size: 12px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+          opacity: 0; pointer-events: none; transform: translateY(-4px); transition: opacity .18s ease, transform .18s ease;
+        `;
+
+        container.style.position = 'relative';
+        container.appendChild(btn);
+
+        const showBtn = () => {
+          btn.style.opacity = '1';
+          btn.style.pointerEvents = 'auto';
+          btn.style.transform = 'translateY(0)';
+        };
+        const hideBtn = () => {
+          btn.style.opacity = '0';
+          btn.style.pointerEvents = 'none';
+          btn.style.transform = 'translateY(-4px)';
+        };
+        container.addEventListener('mouseenter', showBtn);
+        container.addEventListener('mouseleave', hideBtn);
+
+        btn.addEventListener('click', async (e) => {
+          e.stopImmediatePropagation();
+          await handleMusicDownload(container);
+        });
+      });
+    };
+
+    const observer = new MutationObserver(() => {
+      processVideoContainers();
+      document.querySelectorAll('video').forEach((v) => {
+        intersectionObserver.observe(v.parentElement || v);
+      });
+    });
+
+    const intersectionObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting && entry.intersectionRatio > 0.6) {
+          currentVideoElement = entry.target;
+        }
+      });
+    }, { threshold: 0.6 });
+
+    processVideoContainers();
+    observer.observe(document.body, { childList: true, subtree: true });
+    document.querySelectorAll('video').forEach((v) => intersectionObserver.observe(v.parentElement || v));
+  }
   
   // ============ IMPROVED CLICK ============
   
@@ -1355,6 +1547,8 @@
     window.TIKTOK_BOT_STOP = false;
     
     try {
+      initMusicDownloadFeature();
+
       if (pendingTask.action === 'startAutoLike') {
         await runAutoLike(pendingTask);
       } else if (pendingTask.action === 'startAutoComment') {
@@ -1373,8 +1567,12 @@
   
   // Start after page loads
   if (document.readyState === 'complete') {
+    initMusicDownloadFeature();
     setTimeout(main, 2500);
   } else {
-    window.addEventListener('load', () => setTimeout(main, 2500));
+    window.addEventListener('load', () => {
+      initMusicDownloadFeature();
+      setTimeout(main, 2500);
+    });
   }
 })();
