@@ -105,3 +105,8 @@ const APP_CONFIG = {
 - Bo sung trang cai dat rieng (options page).
 - Them logging chi tiet va file report ket qua.
 - Them bo loc user thong minh truoc khi auto follow/comment.
+
+## License
+
+Du an duoc phat hanh theo giay phep MIT.
+Copyright (c) 2026 thuongdq.
