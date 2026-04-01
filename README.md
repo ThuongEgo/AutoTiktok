@@ -1,35 +1,35 @@
-# Auto Tiktok
+# Auto TikTok
 
-Extension Chrome giúp tự động hóa một số thao tác trên TikTok như quét danh sách người dùng, thả tim, bình luận và theo dõi theo lô.
+Tiện ích Chrome giúp tự động hóa một số thao tác trên TikTok như quét danh sách người dùng, thả tim, bình luận và theo dõi theo lô.
 
-## Tinh nang chinh
+## Tính năng chính
 
-- Quet du lieu:
-  - Quet nguoi theo doi / dang theo doi cua 1 tai khoan.
-  - Quet theo hashtag.
-  - Quet nguoi da binh luan tren video.
-- Auto Like:
-  - Thao tac theo hashtag hoac theo danh sach nguoi dung.
-  - Chon che do tha tim hoac bo tim.
-  - Cai dat do tre ngau nhien toi thieu/toi da.
-- Auto Comment:
-  - Binh luan theo hashtag hoac danh sach nguoi dung.
-  - Quan ly danh sach comment (them tay, import file TXT, xoa).
-  - Tuy chon tha tim kem theo khi binh luan.
-- Bulk Follow:
-  - Theo doi hoac huy theo doi theo lo tu danh sach.
-- User List:
-  - Them user thu cong.
-  - Import/Export danh sach user bang file TXT.
-  - Copy nhanh vao clipboard.
-- Giao dien Side Panel:
-  - Mo nhanh trong side panel hoac popup window rieng.
+- Quét dữ liệu:
+  - Quét người theo dõi/đang theo dõi của một tài khoản.
+  - Quét theo hashtag.
+  - Quét người đã bình luận trên video.
+- Tự động thả tim (Auto Like):
+  - Thao tác theo hashtag hoặc theo danh sách người dùng.
+  - Chọn chế độ thả tim hoặc bỏ tim.
+  - Cài đặt độ trễ ngẫu nhiên tối thiểu/tối đa.
+- Tự động bình luận (Auto Comment):
+  - Bình luận theo hashtag hoặc danh sách người dùng.
+  - Quản lý danh sách comment (thêm tay, import file TXT, xóa).
+  - Tùy chọn thả tim kèm theo khi bình luận.
+- Theo dõi hàng loạt (Bulk Follow):
+  - Theo dõi hoặc hủy theo dõi theo lô từ danh sách.
+- Danh sách người dùng (User List):
+  - Thêm người dùng thủ công.
+  - Import/Export danh sách người dùng bằng file TXT.
+  - Sao chép nhanh vào clipboard.
+- Giao diện Side Panel:
+  - Mở nhanh trong side panel hoặc popup window riêng.
 
-## Yeu cau
+## Yêu cầu
 
-- Google Chrome phien ban moi (ho tro Manifest V3).
-- Da dang nhap tai khoan TikTok tren trinh duyet.
-- Quyen extension:
+- Google Chrome phiên bản mới (hỗ trợ Manifest V3).
+- Đã đăng nhập tài khoản TikTok trên trình duyệt.
+- Quyền extension:
   - `activeTab`
   - `storage`
   - `downloads`
@@ -38,31 +38,31 @@ Extension Chrome giúp tự động hóa một số thao tác trên TikTok như 
   - `https://www.tiktok.com/*`
   - `https://tiktok.com/*`
 
-## Cai dat (developer mode)
+## Cài đặt (Developer Mode)
 
-1. Tai hoac clone source code ve may.
-2. Mo Chrome va vao `chrome://extensions/`.
-3. Bat **Developer mode**.
-4. Chon **Load unpacked**.
-5. Tro den thu muc du an `AutoTiktok`.
-6. Bam vao icon extension de mo side panel va bat dau su dung.
+1. Tải hoặc clone source code về máy.
+2. Mở Chrome và vào `chrome://extensions/`.
+3. Bật **Developer mode**.
+4. Chọn **Load unpacked**.
+5. Trỏ đến thư mục dự án `AutoTiktok`.
+6. Bấm vào icon extension để mở side panel và bắt đầu sử dụng.
 
-## Cach su dung nhanh
+## Cách sử dụng nhanh
 
-1. Mo TikTok tren Chrome (extension se uu tien URL co `?lang=en`).
-2. Mo giao dien `Auto Tiktok`.
-3. Chon tab chuc nang:
-   - `Quet`: thu thap user.
-   - `Tha tim`: thao tac like/unlike.
-   - `Binh luan`: cau hinh noi dung va chay comment.
-   - `Theo doi`: follow/unfollow theo lo.
-   - `Danh sach`: quan ly nguoi dung muc tieu.
-4. Dat gioi han va do tre phu hop.
-5. Bam **Bat dau** de chay, dung nut **Dung** khi can.
+1. Mở TikTok trên Chrome (extension sẽ ưu tiên URL có `?lang=en`).
+2. Mở giao diện `Auto TikTok`.
+3. Chọn tab chức năng:
+   - `Quét`: thu thập người dùng.
+   - `Thả tim`: thao tác like/unlike.
+   - `Bình luận`: cấu hình nội dung và chạy comment.
+   - `Theo dõi`: follow/unfollow theo lô.
+   - `Danh sách`: quản lý người dùng mục tiêu.
+4. Đặt giới hạn và độ trễ phù hợp.
+5. Bấm **Bắt đầu** để chạy, dùng nút **Dừng** khi cần.
 
-## Cau hinh
+## Cấu hình
 
-Tat ca cau hinh trung tam nam trong file `config.js`:
+Tất cả cấu hình trung tâm nằm trong file `config.js`:
 
 - `LIMITS`:
   - `maxLikes`
@@ -70,7 +70,7 @@ Tat ca cau hinh trung tam nam trong file `config.js`:
   - `maxFollow`
   - `runtimeFreeLimit`
 
-Vi du:
+Ví dụ:
 
 ```js
 const APP_CONFIG = {
@@ -84,29 +84,29 @@ const APP_CONFIG = {
 };
 ```
 
-## Cau truc thu muc
+## Cấu trúc thư mục
 
-- `manifest.json`: cau hinh extension (MV3).
-- `background.js`: service worker + khoi tao storage.
-- `content.js`: script chay tren trang TikTok.
-- `popup.html` / `popup.js` / `popup.css`: giao dien va logic dieu khien.
-- `content.css`: style bo sung tren trang TikTok.
-- `config.js`: bien cau hinh toan cuc.
+- `manifest.json`: cấu hình extension (MV3).
+- `background.js`: service worker + khởi tạo storage.
+- `content.js`: script chạy trên trang TikTok.
+- `popup.html` / `popup.js` / `popup.css`: giao diện và logic điều khiển.
+- `content.css`: style bổ sung trên trang TikTok.
+- `config.js`: biến cấu hình toàn cục.
 
-## Luu y quan trong
+## Lưu ý quan trọng
 
-- Cong cu nay khong phai san pham chinh thuc cua TikTok.
-- Viec tu dong hoa co the vi pham dieu khoan su dung cua nen tang.
-- Nen dung do tre hop ly, han che tan suat cao de giam rui ro khoa tai khoan.
-- Chi su dung tren tai khoan va du lieu ban co quyen truy cap.
+- Công cụ này không phải sản phẩm chính thức của TikTok.
+- Việc tự động hóa có thể vi phạm điều khoản sử dụng của nền tảng.
+- Nên dùng độ trễ hợp lý, hạn chế tần suất cao để giảm rủi ro khóa tài khoản.
+- Chỉ sử dụng trên tài khoản và dữ liệu bạn có quyền truy cập.
 
-## Phat trien tiep
+## Phát triển tiếp
 
-- Bo sung trang cai dat rieng (options page).
-- Them logging chi tiet va file report ket qua.
-- Them bo loc user thong minh truoc khi auto follow/comment.
+- Bổ sung trang cài đặt riêng (options page).
+- Thêm logging chi tiết và file report kết quả.
+- Thêm bộ lọc người dùng thông minh trước khi auto follow/comment.
 
 ## License
 
-Du an duoc phat hanh theo giay phep MIT.
+Dự án được phát hành theo giấy phép MIT.  
 Copyright (c) 2026 thuongdq.
