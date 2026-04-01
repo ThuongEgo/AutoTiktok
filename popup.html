@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auto Tiktok</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="logo">
+        <svg viewBox="0 0 48 48" width="28" height="28">
+          <path fill="#25F4EE" d="M34.145 19.72v-1.584a9.544 9.544 0 0 1-5.214-1.548 9.547 9.547 0 0 0 5.214 3.132Z"/>
+          <path fill="#FE2C55" d="M28.931 16.588a9.474 9.474 0 0 1-2.344-6.272h-1.831c.461 2.632 2.021 4.887 4.175 6.272Z"/>
+          <path fill="#25F4EE" d="M19.283 21.538a7.247 7.247 0 0 0-3.768 6.352 7.247 7.247 0 0 0 7.247 7.247 7.208 7.208 0 0 0 2.515-.45v-8.167a11.05 11.05 0 0 1-1.415-.098v6.433a7.208 7.208 0 0 1-2.515.45 7.247 7.247 0 0 1-7.247-7.247 7.247 7.247 0 0 1 5.183-6.94v-1.832c-3.944.403-7.097 3.617-7.097 7.558 0 4.006 3.241 7.247 7.247 7.247 4.006 0 7.247-3.241 7.247-7.247V18.29a11.05 11.05 0 0 0 6.465 2.063v-1.584a9.547 9.547 0 0 1-5.214-3.132 9.52 9.52 0 0 1-4.175-6.272h-4.486v18.478a4.8 4.8 0 0 1-4.8 4.8 4.8 4.8 0 0 1-4.8-4.8c0-2.65 2.15-4.8 4.8-4.8.374 0 .736.043 1.085.125v-1.629Z"/>
+          <path fill="#FE2C55" d="M34.145 18.136v1.584a11.05 11.05 0 0 1-6.465-2.063v9.553c0 4.006-3.241 7.247-7.247 7.247-1.584 0-3.05-.507-4.247-1.369a7.247 7.247 0 0 0 6.162 3.453c4.006 0 7.247-3.241 7.247-7.247v-9.553a11.05 11.05 0 0 0 6.465 2.063v-4.516a9.593 9.593 0 0 1-1.915-.152Z"/>
+        </svg>
+        <span class="logo-text">Auto Tiktok</span>
+      </div>
+      <div class="header-right">
+        <button class="btn-popup" id="btnOpenWindow" title="Mở trong cửa sổ riêng">⧉</button>
+        <div class="status-indicator" id="statusIndicator">
+          <span class="status-dot"></span>
+          <span class="status-text">Sẵn sàng</span>
+        </div>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="extractor">Quét</button>
+      <button class="tab" data-tab="autolike">Thả tim</button>
+      <button class="tab" data-tab="autocomment">Bình luận</button>
+      <button class="tab" data-tab="bulkfollow">Theo dõi</button>
+      <button class="tab" data-tab="userlist">Danh sách</button>
+    </nav>
+
+    <main class="content">
+      <!-- Extractor Tab -->
+      <section class="tab-content active" id="extractor">
+        <div class="form-group">
+          <label>Loại</label>
+          <div class="radio-group">
+            <label class="radio-item"><input type="radio" name="extractType" value="followers" checked><span class="radio-mark"></span><span>Người theo dõi</span></label>
+            <label class="radio-item"><input type="radio" name="extractType" value="followings"><span class="radio-mark"></span><span>Đang theo dõi</span></label>
+            <label class="radio-item"><input type="radio" name="extractType" value="hashtag"><span class="radio-mark"></span><span>Thẻ hashtag</span></label>
+            <label class="radio-item"><input type="radio" name="extractType" value="commenters"><span class="radio-mark"></span><span>Người bình luận</span></label>
+          </div>
+        </div>
+        <div class="form-group" id="extractInputGroup">
+          <label id="extractInputLabel">Tên người dùng</label>
+          <input type="text" id="extractInput" placeholder="Nhập tên (không có @)">
+        </div>
+        <div class="form-group">
+          <label>Số người tối đa (thường có thể quét 1000-2000 người)</label>
+          <input type="number" id="maxExtract" value="100" min="1" max="10000">
+        </div>
+        <div class="button-row">
+          <button class="btn btn-primary" id="startExtract">Bắt đầu</button>
+          <button class="btn btn-danger" id="stopExtract" disabled>Dừng</button>
+        </div>
+        <div class="results-box">
+          <div class="results-header"><span>Đã quét</span><span class="counter" id="extractCounter">0</span></div>
+          <div class="results-list" id="extractedList"></div>
+          <div class="button-row">
+            <button class="btn btn-secondary btn-sm" id="copyExtracted">Sao chép</button>
+            <button class="btn btn-secondary btn-sm" id="exportExtracted">Xuất file</button>
+            <button class="btn btn-secondary btn-sm" id="sendToList">Đưa vào danh sách</button>
+            <button class="btn btn-secondary btn-sm" id="clearExtracted">Xóa</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Auto Like Tab -->
+      <section class="tab-content" id="autolike">
+        <div class="form-group">
+          <label>Đối tượng</label>
+          <div class="radio-group horizontal">
+            <label class="radio-item"><input type="radio" name="likeTarget" value="hashtag" checked><span class="radio-mark"></span><span>Thẻ hashtag</span></label>
+            <label class="radio-item"><input type="radio" name="likeTarget" value="userlist"><span class="radio-mark"></span><span>Danh sách người dùng</span></label>
+          </div>
+        </div>
+        <div class="form-group" id="hashtagInputGroup">
+          <label>Thẻ hashtag</label>
+          <input type="text" id="likeHashtag" placeholder="Nhập hashtag (không có #)">
+        </div>
+        <div class="form-group" id="postsPerUserLikeGroup" style="display: none;">
+          <label>Bài mỗi người</label>
+          <input type="number" id="postsPerUserLike" value="1" min="1" max="50">
+        </div>
+        <div class="form-group">
+          <label>Hành động</label>
+          <div class="radio-group horizontal">
+            <label class="radio-item"><input type="radio" name="likeAction" value="like" checked><span class="radio-mark"></span><span>Thả tim</span></label>
+            <label class="radio-item"><input type="radio" name="likeAction" value="unlike"><span class="radio-mark"></span><span>Bỏ tim</span></label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Số bài tối đa <span class="limit-badge" id="likeLimitBadge"></span></label>
+          <input type="number" id="maxLikes" value="5" min="1" max="10000" class="limited-input" data-config-key="maxLikes">
+        </div>
+        <div class="form-group">
+          <label>Độ trễ (giây)</label>
+          <div class="range-inputs">
+            <input type="number" id="likeDelayMin" value="2" min="1" max="60">
+            <span>đến</span>
+            <input type="number" id="likeDelayMax" value="5" min="1" max="120">
+          </div>
+        </div>
+        <div class="button-row">
+          <button class="btn btn-primary" id="startLike">Bắt đầu</button>
+          <button class="btn btn-danger" id="stopLike" disabled>Dừng</button>
+        </div>
+        <div class="progress-box">
+          <div class="progress-header"><span>Tiến độ</span><span id="likeProgressText">0 / 0</span></div>
+          <div class="progress-bar"><div class="progress-fill" id="likeProgressFill"></div></div>
+          <div class="log-box" id="likeLog"></div>
+        </div>
+      </section>
+
+      <!-- Auto Comment Tab -->
+      <section class="tab-content" id="autocomment">
+        <div class="form-group">
+          <label>Đối tượng</label>
+          <div class="radio-group horizontal">
+            <label class="radio-item"><input type="radio" name="commentTarget" value="hashtag" checked><span class="radio-mark"></span><span>Thẻ hashtag</span></label>
+            <label class="radio-item"><input type="radio" name="commentTarget" value="userlist"><span class="radio-mark"></span><span>Danh sách người dùng</span></label>
+          </div>
+        </div>
+        <div class="form-group" id="commentHashtagGroup">
+          <label>Thẻ hashtag</label>
+          <input type="text" id="commentHashtag" placeholder="Nhập hashtag (không có #)">
+        </div>
+        <div class="form-group" id="postsPerUserCommentGroup" style="display: none;">
+          <label>Bài mỗi người</label>
+          <input type="number" id="postsPerUserComment" value="1" min="1" max="50">
+        </div>
+        <div class="form-group">
+          <label>Bình luận</label>
+          <div class="comments-input">
+            <textarea id="newComment" placeholder="Nhập nội dung bình luận..." rows="2"></textarea>
+            <button class="btn btn-secondary btn-sm" id="addComment">Thêm</button>
+          </div>
+          <div class="comments-list" id="commentsList"></div>
+          <div class="button-row">
+            <button class="btn btn-secondary btn-sm" id="importComments">Nhập từ file</button>
+            <button class="btn btn-secondary btn-sm" id="clearComments">Xóa</button>
+          </div>
+          <input type="file" id="commentsFile" accept=".txt" style="display: none;">
+        </div>
+        <div class="form-group inline-group">
+          <label>Thả tim kèm theo</label>
+          <label class="switch"><input type="checkbox" id="alsoLike" checked><span class="slider"></span></label>
+        </div>
+        <div class="form-group">
+          <label>Số bài tối đa <span class="limit-badge" id="commentLimitBadge"></span></label>
+          <input type="number" id="maxComments" value="5" min="1" max="10000" class="limited-input" data-config-key="maxComments">
+        </div>
+        <div class="form-group">
+          <label>Độ trễ (giây)</label>
+          <div class="range-inputs">
+            <input type="number" id="commentDelayMin" value="5" min="1" max="60">
+            <span>đến</span>
+            <input type="number" id="commentDelayMax" value="15" min="1" max="120">
+          </div>
+        </div>
+        <div class="button-row">
+          <button class="btn btn-primary" id="startComment">Bắt đầu</button>
+          <button class="btn btn-danger" id="stopComment" disabled>Dừng</button>
+        </div>
+        <div class="progress-box">
+          <div class="progress-header"><span>Tiến độ</span><span id="commentProgressText">0 / 0</span></div>
+          <div class="progress-bar"><div class="progress-fill" id="commentProgressFill"></div></div>
+          <div class="log-box" id="commentLog"></div>
+        </div>
+      </section>
+
+      <!-- Bulk Follow Tab -->
+      <section class="tab-content" id="bulkfollow">
+        <div class="form-group">
+          <label>Yêu cầu hành động (TikTok có thể không thực hiện đủ các yêu cầu này)</label>
+          <div class="radio-group horizontal">
+            <label class="radio-item"><input type="radio" name="followAction" value="follow" checked><span class="radio-mark"></span><span>Theo dõi</span></label>
+            <label class="radio-item"><input type="radio" name="followAction" value="unfollow"><span class="radio-mark"></span><span>Hủy theo dõi</span></label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Số người tối đa <span class="limit-badge" id="followLimitBadge"></span></label>
+          <input type="number" id="maxFollow" value="5" min="1" max="10000" class="limited-input" data-config-key="maxFollow">
+        </div>
+        <div class="form-group">
+          <label>Độ trễ (giây)</label>
+          <div class="range-inputs">
+            <input type="number" id="followDelayMin" value="2" min="1" max="60">
+            <span>đến</span>
+            <input type="number" id="followDelayMax" value="10" min="1" max="120">
+          </div>
+        </div>
+        <div class="info-box">Người trong danh sách: <strong id="followUserCount">0</strong></div>
+        <div class="button-row">
+          <button class="btn btn-primary" id="startFollow">Bắt đầu</button>
+          <button class="btn btn-danger" id="stopFollow" disabled>Dừng</button>
+        </div>
+        <div class="progress-box">
+          <div class="progress-header"><span>Tiến độ</span><span id="followProgressText">0 / 0</span></div>
+          <div class="progress-bar"><div class="progress-fill" id="followProgressFill"></div></div>
+          <div class="log-box" id="followLog"></div>
+        </div>
+      </section>
+
+      <!-- User List Tab -->
+      <section class="tab-content" id="userlist">
+        <div class="form-group">
+          <label>Thêm người dùng</label>
+          <div class="input-with-button">
+            <input type="text" id="manualUser" placeholder="Tên người dùng (không có @)">
+            <button class="btn btn-secondary" id="addUser">Thêm</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <button class="btn btn-secondary full-width" id="importUsers">Nhập file TXT</button>
+          <input type="file" id="usersFile" accept=".txt" style="display: none;">
+        </div>
+        <div class="results-box">
+          <div class="results-header"><span>Người dùng</span><span class="counter" id="userListCounter">0</span></div>
+          <div class="results-list" id="userListDisplay"></div>
+          <div class="button-row">
+            <button class="btn btn-secondary btn-sm" id="copyUserList">Sao chép</button>
+            <button class="btn btn-secondary btn-sm" id="exportUserList">Xuất file</button>
+            <button class="btn btn-secondary btn-sm" id="clearUserList">Xóa</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">Auto Tiktok</footer>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
