@@ -20,10 +20,10 @@ chrome.runtime.onInstalled.addListener((details) => {
 
 // Handle messages from content script and popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'downloadMusic') {
+  const runDownload = (url, filename, sendResponse) => {
     chrome.downloads.download({
-      url: message.url,
-      filename: message.filename,
+      url,
+      filename,
       saveAs: false
     }, (downloadId) => {
       if (chrome.runtime.lastError) {
@@ -32,6 +32,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
       sendResponse({ success: true, downloadId });
     });
+  };
+
+  if (message.action === 'downloadMusic') {
+    runDownload(message.url, message.filename, sendResponse);
+    return true;
+  }
+
+  if (message.action === 'downloadVideo') {
+    runDownload(message.url, message.filename, sendResponse);
     return true;
   }
 
@@ -87,6 +96,46 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return null;
     };
 
+    const findPlayVideoUrlInResponse = (data) => {
+      if (!data || typeof data !== 'object') return null;
+
+      const directCandidates = [
+        data.play,
+        data.playUrl,
+        data.play_url,
+        data.video_play
+      ];
+
+      for (const value of directCandidates) {
+        if (typeof value === 'string' && /^https?:\/\//.test(value)) {
+          return value;
+        }
+      }
+
+      const nestedObjects = [
+        data.data,
+        data.result,
+        data.results,
+        data.item,
+        data.aweme,
+        data.video
+      ];
+
+      for (const nested of nestedObjects) {
+        const nestedUrl = findPlayVideoUrlInResponse(nested);
+        if (nestedUrl) return nestedUrl;
+      }
+
+      for (const value of Object.values(data)) {
+        if (value && typeof value === 'object') {
+          const nestedUrl = findPlayVideoUrlInResponse(value);
+          if (nestedUrl) return nestedUrl;
+        }
+      }
+
+      return null;
+    };
+
     fetch('https://tiker.io/api/tiktok', {
       method: 'POST',
       headers: {
@@ -103,7 +152,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
         const data = await response.json();
         const musicUrl = findMusicUrlInResponse(data);
-        sendResponse({ success: !!musicUrl, musicUrl, raw: data });
+        const play = findPlayVideoUrlInResponse(data);
+        sendResponse({ success: !!musicUrl, musicUrl, play, raw: data });
       })
       .catch((error) => {
         sendResponse({ success: false, error: error.message });

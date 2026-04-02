@@ -357,8 +357,14 @@
     window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
   }
 
-  async function getMusicPlayUrl(videoUrl, videoId) {
-    if (!videoUrl) return null;
+  let tikerMediaCache = { key: null, payload: null };
+
+  async function fetchTikerMedia(videoUrl, videoId) {
+    if (!videoUrl) return { musicUrl: null, play: null };
+
+    if (tikerMediaCache.key === videoUrl && tikerMediaCache.payload) {
+      return tikerMediaCache.payload;
+    }
 
     try {
       const response = await chrome.runtime.sendMessage({
@@ -366,14 +372,25 @@
         videoUrl
       });
 
-      if (response?.success && response.musicUrl) {
-        window.__LAST_VIDEO_ID = videoId || null;
-        window.__LAST_MUSIC_URL = response.musicUrl;
-        return response.musicUrl;
-      }
-    } catch (e) {}
+      const musicUrl = (response?.success && response.musicUrl) ? response.musicUrl : null;
+      const play = (typeof response?.play === 'string' && /^https?:\/\//.test(response.play))
+        ? response.play
+        : null;
 
-    return null;
+      if (musicUrl) window.__LAST_MUSIC_URL = musicUrl;
+      if (musicUrl || play) window.__LAST_VIDEO_ID = videoId || null;
+
+      const payload = { musicUrl, play };
+      if (musicUrl || play) tikerMediaCache = { key: videoUrl, payload };
+      return payload;
+    } catch (e) {
+      return { musicUrl: null, play: null };
+    }
+  }
+
+  async function getMusicPlayUrl(videoUrl, videoId) {
+    const { musicUrl } = await fetchTikerMedia(videoUrl, videoId);
+    return musicUrl;
   }
 
   function initMusicDownloadFeature() {
@@ -398,6 +415,26 @@
       }
     };
 
+    const handleVideoNoLogoDownload = async (container) => {
+      const videoId = extractVideoId(container);
+      if (!videoId) {
+        alert('Không tìm thấy video ID');
+        return;
+      }
+
+      const videoUrl = extractVideoUrl(container, videoId);
+      const { play } = await fetchTikerMedia(videoUrl, videoId);
+      if (play) {
+        chrome.runtime.sendMessage({
+          action: 'downloadVideo',
+          url: play,
+          filename: `tiktok-video-no-logo-${Date.now()}.mp4`
+        });
+      } else {
+        alert('Không lấy được link video (trường play).');
+      }
+    };
+
     if (window.__TIKTOK_MUSIC_DL_READY) return;
     window.__TIKTOK_MUSIC_DL_READY = true;
 
@@ -410,42 +447,70 @@
       'div.tiktok-1c7urtf'
     ].join(', ');
 
+    const dlBtnSharedStyle = `
+      position: absolute; right: 12px; z-index: 9999;
+      background: #ff2d55; color: white; border: none; padding: 5px 9px;
+      border-radius: 9999px; font-size: 12px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      opacity: 0; pointer-events: none; transform: translateY(-4px); transition: opacity .18s ease, transform .18s ease;
+    `;
+
+    const attachDlHover = (container) => {
+      if (container.dataset.tiktokDlWired) return;
+      container.dataset.tiktokDlWired = '1';
+      const showDlButtons = () => {
+        container.querySelectorAll('.tiktok-music-dl-btn, .tiktok-video-wm-dl-btn').forEach((b) => {
+          b.style.opacity = '1';
+          b.style.pointerEvents = 'auto';
+          b.style.transform = 'translateY(0)';
+        });
+      };
+      const hideDlButtons = () => {
+        container.querySelectorAll('.tiktok-music-dl-btn, .tiktok-video-wm-dl-btn').forEach((b) => {
+          b.style.opacity = '0';
+          b.style.pointerEvents = 'none';
+          b.style.transform = 'translateY(-4px)';
+        });
+      };
+      container.addEventListener('mouseenter', showDlButtons);
+      container.addEventListener('mouseleave', hideDlButtons);
+    };
+
     const processVideoContainers = () => {
       const videoContainers = document.querySelectorAll(containerSelector);
       videoContainers.forEach((container) => {
         if (!container.querySelector('video')) return;
-        if (container.querySelector('.tiktok-music-dl-btn')) return;
 
-        const btn = document.createElement('button');
-        btn.className = 'tiktok-music-dl-btn';
-        btn.innerHTML = '♫ Tải nhạc';
-        btn.style.cssText = `
-          position: absolute; top: 12px; right: 12px; z-index: 9999;
-          background: #ff2d55; color: white; border: none; padding: 5px 9px;
-          border-radius: 9999px; font-size: 12px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-          opacity: 0; pointer-events: none; transform: translateY(-4px); transition: opacity .18s ease, transform .18s ease;
-        `;
+        const hasMusic = container.querySelector('.tiktok-music-dl-btn');
+        const hasVideo = container.querySelector('.tiktok-video-wm-dl-btn');
+        if (hasMusic && hasVideo) return;
 
         container.style.position = 'relative';
-        container.appendChild(btn);
 
-        const showBtn = () => {
-          btn.style.opacity = '1';
-          btn.style.pointerEvents = 'auto';
-          btn.style.transform = 'translateY(0)';
-        };
-        const hideBtn = () => {
-          btn.style.opacity = '0';
-          btn.style.pointerEvents = 'none';
-          btn.style.transform = 'translateY(-4px)';
-        };
-        container.addEventListener('mouseenter', showBtn);
-        container.addEventListener('mouseleave', hideBtn);
+        if (!hasMusic) {
+          const btn = document.createElement('button');
+          btn.className = 'tiktok-music-dl-btn';
+          btn.innerHTML = '♫ Tải nhạc';
+          btn.style.cssText = `top: 12px; ${dlBtnSharedStyle}`;
+          container.appendChild(btn);
+          btn.addEventListener('click', async (e) => {
+            e.stopImmediatePropagation();
+            await handleMusicDownload(container);
+          });
+        }
 
-        btn.addEventListener('click', async (e) => {
-          e.stopImmediatePropagation();
-          await handleMusicDownload(container);
-        });
+        if (!hasVideo) {
+          const vbtn = document.createElement('button');
+          vbtn.className = 'tiktok-video-wm-dl-btn';
+          vbtn.textContent = '⬇ Video (no logo)';
+          vbtn.style.cssText = `top: 48px; ${dlBtnSharedStyle}`;
+          container.appendChild(vbtn);
+          vbtn.addEventListener('click', async (e) => {
+            e.stopImmediatePropagation();
+            await handleVideoNoLogoDownload(container);
+          });
+        }
+
+        attachDlHover(container);
       });
     };
 
