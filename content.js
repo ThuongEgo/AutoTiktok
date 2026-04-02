@@ -393,7 +393,7 @@
     return musicUrl;
   }
 
-  function initMusicDownloadFeature() {
+  async function initMusicDownloadFeature() {
     const handleMusicDownload = async (container) => {
       const videoId = extractVideoId(container);
       if (!videoId) {
@@ -438,6 +438,15 @@
     if (window.__TIKTOK_MUSIC_DL_READY) return;
     window.__TIKTOK_MUSIC_DL_READY = true;
 
+    // Read toggles from popup (chrome.storage.local)
+    let musicDownloadEnabled = true;
+    let videoDownloadEnabled = true;
+    try {
+      const cfg = await chrome.storage.local.get(['enableMusicDownload', 'enableVideoDownload']);
+      musicDownloadEnabled = cfg.enableMusicDownload !== false;
+      videoDownloadEnabled = cfg.enableVideoDownload !== false;
+    } catch (e) {}
+
     const containerSelector = [
       'div[data-e2e="feed-video"]',
       'div[data-e2e="video-item"]',
@@ -475,17 +484,11 @@
       container.addEventListener('mouseleave', hideDlButtons);
     };
 
-    const processVideoContainers = () => {
-      const videoContainers = document.querySelectorAll(containerSelector);
-      videoContainers.forEach((container) => {
-        if (!container.querySelector('video')) return;
+    const updateDlButtonsForContainer = (container) => {
+      const hasMusic = container.querySelector('.tiktok-music-dl-btn');
+      const hasVideo = container.querySelector('.tiktok-video-wm-dl-btn');
 
-        const hasMusic = container.querySelector('.tiktok-music-dl-btn');
-        const hasVideo = container.querySelector('.tiktok-video-wm-dl-btn');
-        if (hasMusic && hasVideo) return;
-
-        container.style.position = 'relative';
-
+      if (musicDownloadEnabled) {
         if (!hasMusic) {
           const btn = document.createElement('button');
           btn.className = 'tiktok-music-dl-btn';
@@ -497,7 +500,11 @@
             await handleMusicDownload(container);
           });
         }
+      } else if (hasMusic) {
+        hasMusic.remove();
+      }
 
+      if (videoDownloadEnabled) {
         if (!hasVideo) {
           const vbtn = document.createElement('button');
           vbtn.className = 'tiktok-video-wm-dl-btn';
@@ -509,10 +516,35 @@
             await handleVideoNoLogoDownload(container);
           });
         }
+      } else if (hasVideo) {
+        hasVideo.remove();
+      }
+    };
+
+    const processVideoContainers = () => {
+      const videoContainers = document.querySelectorAll(containerSelector);
+      videoContainers.forEach((container) => {
+        if (!container.querySelector('video')) return;
+
+        container.style.position = 'relative';
+        updateDlButtonsForContainer(container);
 
         attachDlHover(container);
       });
     };
+
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area !== 'local') return;
+
+      const musicChanged = Object.prototype.hasOwnProperty.call(changes, 'enableMusicDownload');
+      const videoChanged = Object.prototype.hasOwnProperty.call(changes, 'enableVideoDownload');
+      if (!musicChanged && !videoChanged) return;
+
+      if (musicChanged) musicDownloadEnabled = changes.enableMusicDownload.newValue !== false;
+      if (videoChanged) videoDownloadEnabled = changes.enableVideoDownload.newValue !== false;
+
+      processVideoContainers();
+    });
 
     const observer = new MutationObserver(() => {
       processVideoContainers();
@@ -1612,7 +1644,7 @@
     window.TIKTOK_BOT_STOP = false;
     
     try {
-      initMusicDownloadFeature();
+      void initMusicDownloadFeature().catch(() => {});
 
       if (pendingTask.action === 'startAutoLike') {
         await runAutoLike(pendingTask);
@@ -1632,11 +1664,11 @@
   
   // Start after page loads
   if (document.readyState === 'complete') {
-    initMusicDownloadFeature();
+    void initMusicDownloadFeature().catch(() => {});
     setTimeout(main, 2500);
   } else {
     window.addEventListener('load', () => {
-      initMusicDownloadFeature();
+      void initMusicDownloadFeature().catch(() => {});
       setTimeout(main, 2500);
     });
   }

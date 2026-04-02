@@ -33,6 +33,7 @@
       <button class="tab" data-tab="autocomment">Bình luận</button>
       <button class="tab" data-tab="bulkfollow">Theo dõi</button>
       <button class="tab" data-tab="userlist">Danh sách</button>
+      <button class="tab" data-tab="media">Tải media</button>
     </nav>
 
     <main class="content">
@@ -229,6 +230,27 @@
             <button class="btn btn-secondary btn-sm" id="exportUserList">Xuất file</button>
             <button class="btn btn-secondary btn-sm" id="clearUserList">Xóa</button>
           </div>
+        </div>
+      </section>
+
+      <!-- Media Download Tab -->
+      <section class="tab-content" id="media">
+        <div class="form-group">
+          <label>Nhạc</label>
+          <div class="radio-group horizontal">
+            <label class="radio-item"><input type="radio" name="musicDownloadEnabled" value="on" checked><span class="radio-mark"></span><span>Bật</span></label>
+            <label class="radio-item"><input type="radio" name="musicDownloadEnabled" value="off"><span class="radio-mark"></span><span>Tắt</span></label>
+          </div>
+          <small>Hiển thị nút “♫ Tải nhạc” khi bật.</small>
+        </div>
+
+        <div class="form-group">
+          <label>Video</label>
+          <div class="radio-group horizontal">
+            <label class="radio-item"><input type="radio" name="videoDownloadEnabled" value="on" checked><span class="radio-mark"></span><span>Bật</span></label>
+            <label class="radio-item"><input type="radio" name="videoDownloadEnabled" value="off"><span class="radio-mark"></span><span>Tắt</span></label>
+          </div>
+          <small>Hiển thị nút “⬇ Video (no logo)” khi bật.</small>
         </div>
       </section>
     </main>

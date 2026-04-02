@@ -3,6 +3,7 @@ const state = {
   extractedUsers: [],
   userList: [],
   comments: [],
+  mediaDownload: { musicEnabled: true, videoEnabled: true },
   isRunning: false,
   currentTask: null
 };
@@ -102,6 +103,10 @@ const elements = {
   copyUserListBtn: document.getElementById('copyUserList'),
   exportUserListBtn: document.getElementById('exportUserList'),
   clearUserListBtn: document.getElementById('clearUserList'),
+
+  // Media Download settings
+  musicDownloadRadios: document.querySelectorAll('input[name="musicDownloadEnabled"]'),
+  videoDownloadRadios: document.querySelectorAll('input[name="videoDownloadEnabled"]'),
   
   // Limit badges
   likeLimitBadge: document.getElementById('likeLimitBadge'),
@@ -156,10 +161,19 @@ async function checkRunningTask() {
 
 // Load state
 async function loadState() {
-  const result = await chrome.storage.local.get(['extractedUsers', 'userList', 'comments']);
+  const result = await chrome.storage.local.get([
+    'extractedUsers',
+    'userList',
+    'comments',
+    'enableMusicDownload',
+    'enableVideoDownload'
+  ]);
   if (result.extractedUsers) state.extractedUsers = result.extractedUsers;
   if (result.userList) state.userList = result.userList;
   if (result.comments) state.comments = result.comments;
+
+  state.mediaDownload.musicEnabled = result.enableMusicDownload !== false;
+  state.mediaDownload.videoEnabled = result.enableVideoDownload !== false;
 }
 
 // Save state
@@ -229,6 +243,10 @@ function setupEventListeners() {
   elements.copyUserListBtn.addEventListener('click', () => copyToClipboard(state.userList));
   elements.exportUserListBtn.addEventListener('click', () => exportToFile(state.userList, 'user_list.txt'));
   elements.clearUserListBtn.addEventListener('click', clearUserList);
+
+  // Media Download toggles
+  elements.musicDownloadRadios.forEach(radio => radio.addEventListener('change', onMediaDownloadToggleChange));
+  elements.videoDownloadRadios.forEach(radio => radio.addEventListener('change', onMediaDownloadToggleChange));
   
   // Apri in finestra separata
   document.getElementById('btnOpenWindow').addEventListener('click', () => {
@@ -309,6 +327,37 @@ function updateUI() {
   updateUserList();
   updateCommentsList();
   elements.followUserCount.textContent = state.userList.length;
+  updateMediaDownloadUI();
+}
+
+function updateMediaDownloadUI() {
+  const musicRadioOn = document.querySelector('input[name="musicDownloadEnabled"][value="on"]');
+  const musicRadioOff = document.querySelector('input[name="musicDownloadEnabled"][value="off"]');
+  const videoRadioOn = document.querySelector('input[name="videoDownloadEnabled"][value="on"]');
+  const videoRadioOff = document.querySelector('input[name="videoDownloadEnabled"][value="off"]');
+
+  if (musicRadioOn && musicRadioOff) {
+    musicRadioOn.checked = !!state.mediaDownload.musicEnabled;
+    musicRadioOff.checked = !state.mediaDownload.musicEnabled;
+  }
+
+  if (videoRadioOn && videoRadioOff) {
+    videoRadioOn.checked = !!state.mediaDownload.videoEnabled;
+    videoRadioOff.checked = !state.mediaDownload.videoEnabled;
+  }
+}
+
+async function onMediaDownloadToggleChange() {
+  const musicVal = document.querySelector('input[name="musicDownloadEnabled"]:checked')?.value;
+  const videoVal = document.querySelector('input[name="videoDownloadEnabled"]:checked')?.value;
+
+  state.mediaDownload.musicEnabled = musicVal === 'on';
+  state.mediaDownload.videoEnabled = videoVal === 'on';
+
+  await chrome.storage.local.set({
+    enableMusicDownload: state.mediaDownload.musicEnabled,
+    enableVideoDownload: state.mediaDownload.videoEnabled
+  });
 }
 
 function updateExtractedList() {

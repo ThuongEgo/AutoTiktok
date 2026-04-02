@@ -13,7 +13,9 @@ chrome.runtime.onInstalled.addListener((details) => {
     chrome.storage.local.set({
       extractedUsers: [],
       userList: [],
-      comments: []
+      comments: [],
+      enableMusicDownload: true,
+      enableVideoDownload: true
     });
   }
 });
