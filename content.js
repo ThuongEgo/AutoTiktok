@@ -1065,8 +1065,22 @@
       let userIndex = Math.floor(processed / postsPerUser);
       let postIndex = processed % postsPerUser;
       
+      // Hàm kiểm tra xem trang có video hay không
+      const checkHasVideos = () => {
+        const selectors = [
+          'div[data-e2e="user-post-item"]',
+          'div[data-e2e="user-post-item-list"] > div',
+          '[class*="DivItemContainerV2"]',
+          '[class*="DivItemContainer"]',
+          'a[href*="/video/"]'
+        ];
+        for (const sel of selectors) {
+          if (document.querySelector(sel)) return true;
+        }
+        return false;
+      };
+      
       while (userIndex < totalUsers) {
-       
         
         if (await shouldStop()) {
           console.log('Auto Tiktok: *** STOPPED BY USER ***');
@@ -1085,11 +1099,30 @@
           return;
         }
         
+        // Chờ trang load xong
+        await sleep(2000);
+        
+        // Kiểm tra xem trang có video hay không trước khi thử click
+        if (!checkHasVideos()) {
+          const msg = `Bỏ qua @${user} (không có video)`;
+          addFloatingLog(msg, 'error');
+          sendProgress('likeProgress', { current: userIndex + 1, total: totalUsers, message: msg, success: false });
+          userIndex++;
+          postIndex = 0;
+          if (userIndex < totalUsers) {
+            await chrome.storage.local.set({ pendingTask: { ...task, processed: userIndex * postsPerUser } });
+            await sleep(randomDelay(delayMin, delayMax));
+            location.href = withLangEn(`https://www.tiktok.com/@${users[userIndex].replace('@', '')}`);
+            return;
+          }
+          continue;
+        }
+        
         // Click first video if modal not open
         if (!isVideoModalOpen()) {
           await sleep(2000);
           if (!await clickFirstVideo()) {
-            const msg = `Không có bài đăng @${user}`;
+            const msg = `Bỏ qua @${user} (không mở được video)`;
             addFloatingLog(msg, 'error');
             sendProgress('likeProgress', { current: userIndex + 1, total: totalUsers, message: msg, success: false });
             // Navigate to next user
@@ -1243,8 +1276,22 @@
       let userIndex = Math.floor(processed / postsPerUser);
       let postIndex = processed % postsPerUser;
       
+      // Hàm kiểm tra xem trang có video hay không
+      const checkHasVideos = () => {
+        const selectors = [
+          'div[data-e2e="user-post-item"]',
+          'div[data-e2e="user-post-item-list"] > div',
+          '[class*="DivItemContainerV2"]',
+          '[class*="DivItemContainer"]',
+          'a[href*="/video/"]'
+        ];
+        for (const sel of selectors) {
+          if (document.querySelector(sel)) return true;
+        }
+        return false;
+      };
+      
       while (userIndex < totalUsers) {
-        
         
         if (await shouldStop()) {
           sendProgress('commentComplete', {});
@@ -1261,10 +1308,28 @@
           return;
         }
         
+        // Chờ trang load xong
+        await sleep(2000);
+        
+        // Kiểm tra xem trang có video hay không trước khi thử click
+        if (!checkHasVideos()) {
+          const msg = `Bỏ qua @${user} (không có video)`;
+          addFloatingLog(msg, 'error');
+          sendProgress('commentProgress', { current: userIndex + 1, total: totalUsers, message: msg, success: false });
+          userIndex++;
+          postIndex = 0;
+          if (userIndex < totalUsers) {
+            await chrome.storage.local.set({ pendingTask: { ...task, processed: userIndex * postsPerUser } });
+            location.href = withLangEn(`https://www.tiktok.com/@${users[userIndex].replace('@', '')}`);
+            return;
+          }
+          continue;
+        }
+        
         if (!isVideoModalOpen()) {
           await sleep(2000);
           if (!await clickFirstVideo() || !await waitForVideoModal()) {
-            const msg = `Không có bài đăng @${user}`;
+            const msg = `Bỏ qua @${user} (không mở được video)`;
             addFloatingLog(msg, 'error');
             sendProgress('commentProgress', { current: userIndex + 1, total: totalUsers, message: msg, success: false });
             userIndex++;
